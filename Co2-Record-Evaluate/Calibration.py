@@ -5,6 +5,10 @@ aathome@duck.com
 For HRI
 """
 
+""""
+This zeroes sensor readings, applies calibration factors, evaluates accuracy, and plots results.
+"""""
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -104,9 +108,9 @@ def plot_data(df):
     plt.xlabel('Time (seconds)')
     plt.ylabel('Concentration [ppm]')
     plt.title('Sensor Calibration Comparison with VYV as Reference')
-    plt.savefig('Calibration.jpg')
     plt.legend()
-    plt.grid(True)
+    plt.grid(False)
+    plt.savefig('Calibration.jpg')
     plt.show()
 
 # Main Function

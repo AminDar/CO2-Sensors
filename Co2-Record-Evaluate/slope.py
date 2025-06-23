@@ -14,7 +14,7 @@ import sys
 from scipy.optimize import curve_fit
 
 with open('variables.json', 'r') as openfile:
-    # Reading from json file
+    # Reading from JSON file
     variables = json.load(openfile)
 
 interval = variables[1]
@@ -93,14 +93,14 @@ def plot_with_regression(point, df):
 
         # Plot the data and fitted curve
         plt.figure(figsize=(10, 6))  # Set figure size explicitly for each plot
-        plt.plot(x, y, label='Konzentrationsverlauf')
-        plt.plot(x, y_fitted, label=f'Regressionslinie: {equation_text}', linestyle='--')
+        plt.plot(x, y, label='Concentration')
+        plt.plot(x, y_fitted, label=f'Regression Line: {equation_text}', linestyle='--')
 
         # Plot formatting
-        plt.xlabel('Zeit [s]', fontsize=20)
-        plt.ylabel('Konzentration [ppm]', fontsize=20)
+        plt.xlabel('Time [s]', fontsize=20)
+        plt.ylabel('Concentration [ppm]', fontsize=20)
         plt.legend(loc='upper left', fontsize=16)
-        plt.title('Steigung des Sensors', fontsize=22)
+        plt.title('Slopes', fontsize=22)
         plt.tick_params(axis='both', which='major', labelsize=16)  # 主要刻度字体大小
         plt.tick_params(axis='both', which='minor', labelsize=16)
 
@@ -126,3 +126,6 @@ if not a:
     sys.exit()
 for i in a:
     plot_with_regression(eval_point, i)
+
+if __name__ == '__main__':
+    calibrate_data()

@@ -5,7 +5,6 @@ aathome@duck.com
 For HRI
 """
 
-import numpy as np
 import pandas as pd
 import json
 import sys
@@ -13,6 +12,7 @@ import matplotlib.pyplot as plt
 from colorama import Fore
 from MFCstepupFunction import step_up_calculator
 from MFCstepDownFunction import step_down_calculator
+from Calibration import process_setup_data
 
 ## ASK IF it is the pulse method
 
@@ -23,24 +23,7 @@ path = 'variables.json'
 columns = ['time', 'Concentration [ppm] at VYU', 'Concentration [ppm] at VYV',
            'Concentration [ppm] at 21kv', 'Concentration [ppm] at VZ2']
 
-
-def process_setup_data(df):
-    first_timestamp = df['time'].dropna().iloc[0] if not df['time'].isnull().all() else None
-
-    df['time'] = (df['time'] - first_timestamp).dt.total_seconds()
-    df['time'] = df['time'].astype('float32')
-
-    # set 0
-    for col in df.columns[1:]:
-        df.loc[:, col] = df[col] - df[col].iloc[0]
-
-    # Calibration
-    df = calibrate_data(df)
-
-    return df
-
-
-def process_setdown_data(df):
+def process_stepdown_data(df):
     # Calculate time differences and explicitly cast to float
     first_timestamp = df['time'].dropna().iloc[0] if not df['time'].isnull().all() else None
 
@@ -91,7 +74,7 @@ def split_up_down_data(path, column_names):
     if not df_up.empty:
         df_up = process_setup_data(df_up.copy())
     if not df_down.empty:
-        df_down = process_setdown_data(df_down.copy())
+        df_down = process_stepdown_data(df_down.copy())
 
     return df_up, df_down
 
@@ -133,10 +116,6 @@ if pulse == 0:
     plot_data(df_stepUp, df_stepDown)
 
 else:
-    # import plot
-    import Total_Integral
-    import SplitedIntegral
-
     print(Fore.MAGENTA + '\nThis code is not ready to evaluate pluse method yet! Sorry!'
                          '\nThe figure is exported!')
     sys.exit()
