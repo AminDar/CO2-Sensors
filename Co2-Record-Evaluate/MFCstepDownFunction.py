@@ -1,153 +1,141 @@
+# -*- coding: utf-8 -*-
 """
-Created on Tue Mar 22 10:50:55 2022
-
 @author: Amin Darbandi
+aathome@duck.com
+For HRI
 """
-from colorama import Fore
+
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import numpy as np
-import pandas as pd
 
-O  = '\033[36m' # orange
-W  = '\033[0m'  # white (normal)
-P  = '\033[35m' # purple
-import json
-with open('variables.json', 'r') as openfile:
-  
-    # Reading from json file
-    variables= json.load(openfile)
-
-file = variables [0]
+O = '\033[36m'  # orange
+W = '\033[0m'  # white (normal)
+P = '\033[35m'  # purple
 
 
+def step_down_calculator(df):
+    # Initialization and parameters
+    n = len(df["time"])
 
-MessStelle =['Concentration [ppm] at VYU', 'Concentration [ppm] at VYV',
-       'Concentration [ppm] at VYS', 'Concentration [ppm] at VZ2']
+    t = df['time'].values
+    yFit = df.iloc[:, 1:5].values
+    points = ['VYU', 'VYV', '21kv', 'VZ2']  # Location points based on the data columns
 
-points = ['Top Left', 'Bottom Left','Top Middle', 'Middle Middle' ]
-Columns =['time','Concentration [ppm] at VYU', 'Concentration [ppm] at VYV',
-       'Concentration [ppm] at VYS', 'Concentration [ppm] at VZ2']
+    # Regression model for curve fitting
+    def regressor_model(t, c0, k):
+        """
+        :param t: time
+        :param c0: initial concentration
+        :param k: decay constant
+        :return: exponential decay model
+        """
+        return c0 * np.exp(-k * t)
 
-def StepDown (df):
-    
-    dfAll= pd.concat([df.time, df[MessStelle[0]],df[MessStelle[1]],df[MessStelle[2]],df[MessStelle[3]]],
-                     axis=1,keys = Columns)
+    # Curve fitting to get decay constants
+    c = []
+    for i in range(1, df.shape[1]):
+        y_data = df.iloc[:, i].values
+        initial_guess = [y_data[0], 0.001]
+        popt, _ = curve_fit(regressor_model, t, y_data, initial_guess)
+        c.append(popt)
 
-#loding the backgrund concentration
-
-    n = len(dfAll.time) 
-    g= [2000,0.003]
-    c =[]
-    t=dfAll['time'].values
-    yFit = dfAll.iloc[:,1:5].values 
-    '''BACKGROUND'''
-
-    def consModel (t,c0,c1):
-        return c0*np.exp(-c1*t)
-        
-    #curve fitting
-    
-
-    for i in range(4):
-       c.append (curve_fit(consModel,t,yFit[:,i],g)[0]) 
-    #print ('Constans for the model are %s' %c)
-
-#getting not abslute value
-    slopes =[]
+    # Getting not absolute value of decay constants
+    slopes = []
     for i in range(4):
         slopes.append(c[i][1]*-1)
 
-    time = dfAll['time']
-    
-    
-    # Calculating the C equation in (A+B)/(C+D)
-    tailSum = []
-    for j in range (4): 
-       h =[]
-       for i in range(n - 1):
-           concentration = yFit[:,j]
-           f = abs(((concentration[i + 1] + concentration[i]) / 2) * (time[i] - time[i + 1]))
-           h.append(f)
-       tailSum.append(sum(h))
-    
-# Weigthed area under the curve | Calculating the A equation in (A+B)/(C+D) 
-    WeigthedtailSum = []
-    for j in range (4):
+    # Weighted area under the curve | Calculating the A equation in (A+B)/(C+D)
+    weighted_tail_sum = []
+    for j in range(4):
         h = []
         for i in range(n - 1):
-            
-            concentration = yFit[:,j]    
-            f = abs((((concentration[i + 1] + concentration[i]) / 2) * (time[i] - time[i + 1])) * (time[i] + time[i + 1]) / 2)
+            concentration = yFit[:, j]
+            f = abs(((concentration[i + 1] + concentration[i]) / 2)) * (t[i + 1] - t[i]) * ((t[i] + t[i + 1]) / 2)
             h.append(f)
-        WeigthedtailSum.append(sum(h))
+        weighted_tail_sum.append(sum(h))
 
-# Calculating the B equation in (A+B)/(C+D) 
+    # Calculating the B equation in (A+B)/(C+D)
+    weighted_tail = []
+    for j in range(0, 4):
+        concentration = yFit[:, j]
+        weighted_t = (concentration[-1] / slopes[j]) * ((1 / slopes[j]) + t[-1])
+        weighted_tail.append(weighted_t)
 
-    Weigthedtail = []
-    for j in range (4): 
-        for i in range(n - 1):
-            concentration = yFit[:,j]    
-            WeigthT = (-(concentration[n - 1] / slopes[j]) * ((-1 / slopes[j]) + time[n - 1])) 
-        Weigthedtail.append(WeigthT)
+    # Calculating the C equation in (A+B)/(C+D)
+    tail_sum = []
+    for j in range(0, 4):
+        h = []
+        concentration = yFit[:, j]
+        for i in range(0, n - 1):
+            f = abs(((concentration[i + 1] + concentration[i]) / 2)) * (t[i + 1] - t[i])
+            h.append(f)
+        tail_sum.append(sum(h))
 
-
-#Calculation of D
+    # Calculation of D
     D = []
     for j in range(4):
-        
-     concentration = yFit[:,j]
-     d = (-(concentration[n - 1] / slopes[j]))
-     D.append(d)
-     
-     
-#Mean age of air
+        concentration = yFit[:, j]
+        d = concentration[-2] / slopes[j]
+        D.append(d)
+
+    # Mean age of air
     Tau = []
-    for j in range (4):
-        Taus= (WeigthedtailSum [j] + Weigthedtail[j]) / (tailSum[j] + D[j])
-        where = points[j]
+    for j in range(4):
+        Taus = (weighted_tail_sum[j] + weighted_tail[j]) / (tail_sum[j] + D[j])
         Tau.append(Taus)
-        print (P+'Step Down Mean age of air at %s:' %where, np.round(Taus,3) )
+        print('Step Down Mean age of air at %s:' % points[j], np.round(Taus, 3))
 
-    
-#Nominal air change time
-    nTau =[]
-    for j in range (4):
-        where = points[j]
-        nTaus= (tailSum [j] + D[j])/concentration[j]
+    # Nominal air change time
+    nTau = []
+    for j in range(4):
+        nTaus = (tail_sum[j] + D[j]) / concentration[0]
         nTau.append(nTaus)
-        print (W+'Step Down Nominal air change time at %s:' %where, np.round(nTaus,3) )
+        print('Step Down Nominal air change time at %s:' % points[j], np.round(nTaus, 3))
 
-#Air change efficiency, %
-    airEff = []
-    for j in range (4):
+    # global Air change efficiency, %
+    air_eff = []
+    for j in range(0, 4):
         where = points[j]
-        airEffs= 100*(nTau[j])/(2*Tau[j])
-        airEff.append(airEffs)
-        print (O+'Step Down Air change efficiency at %s:' %where, np.round(airEffs,3), '%')
-        
-#Turn Over Time, %    
-    TurnOver =[]
-    for j in range (4):
+        air_effs = 100 * (nTau[2]) / (2 * Tau[2])  # Tau[auslass]/2tau[j]
+        air_eff.append(air_effs)
+        print(O + 'Step down globale Air change efficiency at %s:' % where, np.round(air_effs, 3), '%')
+
+    # local Air change efficiency, %
+    air_eff = []
+    for j in range(4):
+        air_effs = 100 * (nTau[2]) / (nTau[j])  # Tau[outlet]/tau[p]
+        air_eff.append(air_effs)
+        print('Step Down Air change efficiency at %s:' % points[j], np.round(air_effs, 3), '%')
+
+    # Turn Over Time, %
+    turn_over = []
+    time = df['time'].values
+    for j in range(4):
         h = []
-        for i in range (n-1):
-            where = points[j]
-            concentration = yFit[:,j]    
-            f = abs((concentration[i]+concentration[i+1]) / (2*concentration[0])  * (time[i+1] - time[i]))
+        for i in range(n - 2):
+            concentration = yFit[:, j]
+            # Check if concentration[n-1] is zero and handle it to avoid division by zero
+            time_diff = time[i + 1] - time[i]
+            f = abs(
+                ((concentration[i] + concentration[i + 1]) / (2 * concentration[0])) * time_diff
+            )
             h.append(f)
-        TurnOver.append(sum(h))
-        print (Fore.YELLOW+'Step Down Turn over time at %s:' %where, np.round(TurnOver[j],3))
-    
-    for j in range (4):
-        where = points[j]
-        plt.plot (dfAll['time'],dfAll.iloc[:,j+1].values,'r', label = "Expriemental")
+        turn_over.append(sum(h))
+        print('Step Down Turn over time at %s:' % points[j], np.round(turn_over[j], 3))
+
+    print('-------------')
+
+    # Visualize fitted curves
+
+    for j in range(4):
+        plt.plot(df['time'], df.iloc[:, j + 1].values, label="Experimental")
+        plt.plot(df['time'], regressor_model(t, *c[j]), label="Fitted")
         plt.xlabel('Time')
-        plt.ylabel ('Concentration [ppm]')
-        plt.title ('Step Down Mesuared at %s' %where)
+        plt.ylabel('Concentration [ppm]')
+        plt.title('Step Down Measured at %s' % points[j])
+        plt.legend()
         plt.show()
-        
-    with open("Step Down " + str(file[:-4])+ ".json", "w") as outfile:
-        json.dump([Tau, nTau, airEff,TurnOver],outfile)
 
 
 
