@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# if tinkerfirge is not available then use ~ pip install tinkerforge ~ and run it again
+# if tinkerfirge is not available, then use ~ pip install tinkerforge ~ and run it again
 from tinkerforge.ip_connection import IPConnection
 from tinkerforge.bricklet_co2_v2 import BrickletCO2V2
 
@@ -31,7 +31,7 @@ interval = 1
 
 # Connection protocol to sensors based on their fact sheet
 if __name__ == "__main__":
-    ipcon = IPConnection()  # Create IP connection
+    ipcon = IPConnection()  # Create an IP connection
     co2_1 = BrickletCO2V2(UID_S1, ipcon)  # Create device object for UID_S1
     co2_2 = BrickletCO2V2(UID_S2, ipcon)  # Create device object for UID_S2
     co2_3 = BrickletCO2V2(UID_S3, ipcon)  # Create device object for UID_S3
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 t_start = datetime.now()
 
 # change the time format
-t_start_str = t_start.strftime('%y%m%d_%H%M%S')  # string object
+t_start_str = t_start.strftime('%y%m%d_%H%M%S')  # string an object
 
 # Create a CSV file of concentration at each point(sensor) and change the name to measurement starting time
 file = 'Raw/measure' + str(t_start_str) + '.csv'
@@ -92,7 +92,7 @@ def record_and_show(duration, interval):
         # Read humidity of sensor 1
         humid1 = co2_1.get_humidity()
 
-        # Adding sensors data to data=[] to save as CSV at the end of measurement
+        # Adding sensors' data to data=[] to save as CSV at the end of measurement
         data.append([co2_concentration1, co2_concentration2, co2_concentration3, co2_concentration4, temperature1 / 100,
                      humid1 / 100])
 
@@ -119,10 +119,10 @@ def record_and_show(duration, interval):
         plt.draw()
         plt.pause(1)
         c += 1
-        # Create a data frame at the end of measurement period
+        # Create a data frame at the end of a measurement period
         pd.DataFrame(data, columns=columns)
 
-        # Add recorded and calculated data to csv file
+        # Add recorded and calculated data to the csv file
 
         if keyboard.is_pressed('s'):
             print('Step Down Started'
