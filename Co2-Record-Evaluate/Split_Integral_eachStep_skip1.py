@@ -1,5 +1,5 @@
 """
-@author: Amin Darbandi
+@author: AminDar @Github
 aathome@duck.com
 For HRI
 """

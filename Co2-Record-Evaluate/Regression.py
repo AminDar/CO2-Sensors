@@ -1,6 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 """
-@author: Amin Darbandi
+@author: AminDar @Github
 aathome@duck.com
 For HRI
 """
