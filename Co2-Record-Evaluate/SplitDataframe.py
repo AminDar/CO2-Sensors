@@ -10,9 +10,9 @@ import json
 import sys
 import matplotlib.pyplot as plt
 from colorama import Fore
-from MFCstepupFunction import step_up_calculator
-from MFCstepDownFunction import step_down_calculator
-from Calibration import process_setup_data
+from utils.MFCstepupFunction import step_up_calculator
+from utils.MFCstepDownFunction import step_down_calculator
+from utils.Calibration import process_setup_data
 
 ## ASK IF it is the pulse method
 
@@ -22,6 +22,7 @@ path = 'variables.json'
 
 columns = ['time', 'Concentration [ppm] at VYU', 'Concentration [ppm] at VYV',
            'Concentration [ppm] at 21kv', 'Concentration [ppm] at VZ2']
+
 
 def process_stepdown_data(df):
     # Calculate time differences and explicitly cast to float
@@ -61,12 +62,15 @@ def split_up_down_data(path, column_names):
     df['time'] = pd.to_datetime(df['time'], errors='coerce')
 
     blank_rows = df.isnull().all(axis=1)
-    blank_indices = blank_rows[blank_rows].index
-    split_index = blank_indices[0]
-    for i in range(1, len(blank_indices)):
-        if blank_indices[i] != blank_indices[i - 1] + 1:
-            break
-        split_index = blank_indices[i]
+    blank_indices = list(blank_rows[blank_rows].index)
+    if blank_indices:
+        split_index = blank_indices[0]
+        for i in range(1, len(blank_indices)):
+            if blank_indices[i] != blank_indices[i - 1] + 1:
+                break
+            split_index = blank_indices[i]
+    else:
+        split_index = len(df)
 
     df_up = df.iloc[:split_index].dropna(how='all')
     df_down = df.iloc[split_index + 1:] if split_index < len(df) else pd.DataFrame()
@@ -95,8 +99,10 @@ def plot_data(df_up, df_down):
         df_down['time'] = df_down['time'] + max_time_up
 
         plt.plot(df_down['time'], df_down.iloc[:, 1], label='Sensor 1 (VYU) - Step Down', linestyle='--', color='blue')
-        plt.plot(df_down['time'], df_down.iloc[:, 2], label='Sensor 2 (VYV) - Step Down', linestyle='--', color='orange')
-        plt.plot(df_down['time'], df_down.iloc[:, 3], label='Sensor 3 (21kv) - Step Down', linestyle='--', color='green')
+        plt.plot(df_down['time'], df_down.iloc[:, 2], label='Sensor 2 (VYV) - Step Down', linestyle='--',
+                 color='orange')
+        plt.plot(df_down['time'], df_down.iloc[:, 3], label='Sensor 3 (21kv) - Step Down', linestyle='--',
+                 color='green')
         plt.plot(df_down['time'], df_down.iloc[:, 4], label='Sensor 4 (VZ2) - Step Down', linestyle='--', color='red')
 
     plt.xlabel('Time (seconds)')

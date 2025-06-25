@@ -11,12 +11,12 @@ import json
 import os
 
 # Read variables from the JSON file
-with open('variables.json', 'r') as openfile:
+with open('../variables.json', 'r') as openfile:
     variables = json.load(openfile)
 
 interval = variables[1]
 file = variables[0][4:]
-path_to_load = os.path.join('Raw', file)
+path_to_load = os.path.join('../Raw', file)
 
 def calibrate_data(df):
     # Assume these are the calibration factors and offsets

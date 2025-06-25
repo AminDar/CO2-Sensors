@@ -12,13 +12,13 @@ import json
 from itertools import chain
 import os
 
-with open('variables.json', 'r') as openfile:
+with open('../variables.json', 'r') as openfile:
     # Reading from a JSON file
     variables = json.load(openfile)
 
 interval = variables[1]
 file = variables[0][4:]
-path_to_load = os.path.join('Raw', file)
+path_to_load = os.path.join('../Raw', file)
 """
 UID_S1 = 'VYU' #the UID of CO2 Bricklet 2.0
 UID_S2 = 'VYV' #the UID of  CO2 Bricklet 2.0
@@ -92,7 +92,7 @@ def periodic_integral(point, df, ymin):
 
     plt.yticks(np.arange(ymin, max(y) + 1, 150), fontsize=12)
 
-    integral_value = np.trapz(x=np.array(x)[idx], y=np.array(y)[idx] - ymin)
+    integral_value = np.trapezoid(x=np.array(x)[idx], y=np.array(y)[idx] - ymin)
 
     print(f"Integral under the curve for {points[point]} is: {integral_value}")
 

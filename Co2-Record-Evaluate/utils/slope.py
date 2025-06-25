@@ -13,13 +13,13 @@ import os
 import sys
 from scipy.optimize import curve_fit
 
-with open('variables.json', 'r') as openfile:
-    # Reading from JSON file
+with open('../variables.json', 'r') as openfile:
+    # Reading from a JSON file
     variables = json.load(openfile)
 
 interval = variables[1]
 file = variables[0][4:]
-path_to_load = os.path.join('Raw', file)
+path_to_load = os.path.join('../Raw', file)
 
 def regressor_model(t, a, b):
     return a * np.exp(b * t)

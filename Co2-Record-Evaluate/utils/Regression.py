@@ -9,11 +9,12 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import json
+import os
 
 # Load the path from variables.json
-with open('variables.json', 'r') as file:
+with open('../variables.json', 'r') as file:
     metadata = json.load(file)
-csv_file_path = metadata[0]  # Extract the CSV file path from the JSON file
+csv_file_path = os.path.join('..',metadata[0])  # Extract the CSV file path from the JSON file
 
 # Load your data
 df = pd.read_csv(csv_file_path, delimiter=';', skip_blank_lines=True)

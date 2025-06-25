@@ -15,9 +15,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from scipy.stats import pearsonr, spearmanr
 import matplotlib.pyplot as plt
 import json
+import os
 
 # File path for variables.json
-path = 'variables.json'
+path = '../variables.json'
 
 # Column names for the CSV file
 columns = ['time', 'Concentration [ppm] at VYU', 'Concentration [ppm] at VYV',
@@ -53,7 +54,8 @@ def split_up_data(path, column_names):
         metadata = json.load(json_file)
 
     # Read CSV data
-    csv_file_path = metadata[0]
+    csv_file_path = os.path.join('..',metadata[0])
+    print(csv_file_path)
     df = pd.read_csv(csv_file_path, delimiter=';', skip_blank_lines=True)
     df.columns = column_names
 
