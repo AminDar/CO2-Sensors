@@ -17,33 +17,28 @@ from sys import exit
 import keyboard
 
 
-mfc = minbus.Instrument('COM3', 11, 'rtu', True, False)
-mfc.serial.baudrate = 9600
-mfc.serial.parity = serial.PARITY_NONE
-mfc.serial.timeout = 0.3
-mfc.serial.stopbits = 2
+def initialize_mfc(port='COM3', slave_id=11):
+    mfc = minbus.Instrument(port, slave_id, 'rtu', True, False)
+    mfc.serial.baudrate = 9600
+    mfc.serial.parity = serial.PARITY_NONE
+    mfc.serial.timeout = 0.3
+    mfc.serial.stopbits = 2
+    return mfc
 
 # Read an integer from one 16-bit register in the slave, possibly scaling it.
 
+def create_csv_logger():
+    t_start = datetime.now()
+    t_start_str = t_start.strftime('%y%m%d_%H%M%S')
+    file_path = f'Raw/MFC{t_start_str}.csv'
+    with open(file_path, 'w') as csv_file:
+        writer = csv.writer(csv_file, delimiter=';', lineterminator='\r')
+        writer.writerow(['Time', 'Gas Flow', 'Temp'])
+    return file_path
 
-if keyboard.is_pressed('q'):
-    print("Gas Flow Controller is set to zero \n Gas Flow Stopped"
-          "\n Step Down started")
-    mfc.write_float(6, 0.0)
-    exit()
-
-columns = ['Gas Flow', 'temp']
-data = []
-t_start = datetime.now()
-t_start_str = t_start.strftime('%y%m%d_%H%M%S')  # string object
-
-file = 'Raw_MFC/MFC ' + str(t_start_str) + '.csv'
-with open(file, 'w') as csv_file:
-    writer = csv.writer(csv_file, delimiter=';', lineterminator='\r')
-    writer.writerow(['Time', 'Gas Flow', 'Temp'])
-
-def record_and_show(duration, interval, set_point):
-
+def record_and_show(mfc, file, duration, interval, set_point):
+    columns = ['Gas Flow', 'temp']
+    data = []
     set_point = float(set_point)
     if set_point > 9:
         print('Set point is over threshold. Try again')
@@ -63,51 +58,43 @@ def record_and_show(duration, interval, set_point):
         data.append([current_gas_flow, temp])
         data_live1.append(current_gas_flow)
         data_live2.append(temp)
-        # t.sleep(interval)
-        t_now = datetime.now()  # current time stamp
+        t_now = datetime.now()
         time_live.append(t_now)
-
-        # Plot the gas flow
-        # plt.legend(['Gas Flow'], loc='center', bbox_to_anchor=(0.8, 0.8))
-        # plt.xticks(rotation=45)
-        # plt.plot(time_live, data_live1, color='red')
-        # plt.draw()
-        # plt.pause(1)
 
         c += 1
         pd.DataFrame(data, columns=columns)
-        # Add recorded and calculated data to csv file
+
         if keyboard.is_pressed('s'):
-            print('Step Down Stated'
-                  '\n **************'
-                  '\n **************')
+            print('Step Down Started\n**************\n**************')
             mfc.write_float(6, 0.0)
             print(current_gas_flow)
             with open(file, 'a') as csv_file:
                 writer = csv.writer(csv_file, delimiter=';', lineterminator='\r')
-                writer.writerow('\n')
-                csv_file.close()
+                writer.writerow([''] * 3)
 
         elif keyboard.is_pressed('u'):
-            print('Step Up Stated'
-                  '\n **************'
-                  '\n **************')
+            print('Step Up Started\n**************\n**************')
             mfc.write_float(6, set_point)
             print(current_gas_flow)
 
         elif keyboard.is_pressed('q'):
-            print('Process is terminated'
-                  '\n **************'
-                  '\n **************')
+            print('Process is terminated\n**************\n**************')
             mfc.write_float(6, 0.0)
             exit()
 
         else:
-            print(f'Hold S for step Down, Hold U for step up and Q for quit')
+            print('Hold S for step Down, U for step up, and Q for quit')
             with open(file, 'a') as csv_file:
                 writer = csv.writer(csv_file, delimiter=';', lineterminator='\r')
                 writer.writerow([t_now, current_gas_flow, temp])
-                csv_file.close()
 
+if __name__ == "__main__":
+    if keyboard.is_pressed('q'):
+        mfc = initialize_mfc()
+        print("Gas Flow Controller is set to zero \nGas Flow Stopped\nStep Down started")
+        mfc.write_float(6, 0.0)
+        exit()
 
-record_and_show(1150, 1, 2)
+    mfc = initialize_mfc()
+    file = create_csv_logger()
+    record_and_show(mfc, file, 1150, 1, 2)

@@ -1,4 +1,3 @@
-
 """
 @author: AminDar @Github
 aathome@duck.com
@@ -11,121 +10,81 @@ import matplotlib.pyplot as plt
 import json
 from itertools import chain
 import os
+from pathlib import Path
 
-with open('../variables.json', 'r') as openfile:
-    # Reading from a JSON file
-    variables = json.load(openfile)
+try:
+    with open(Path('../variables.json'), 'r') as openfile:
+        variables = json.load(openfile)
+    interval = variables[1]
+    file = variables[0][4:]
+    path_to_load = Path('../Raw') / file
+except (FileNotFoundError, json.JSONDecodeError, IndexError) as e:
+    print(f"Error loading configuration: {e}")
+    exit(1)
 
-interval = variables[1]
-file = variables[0][4:]
-path_to_load = os.path.join('../Raw', file)
-"""
-UID_S1 = 'VYU' #the UID of CO2 Bricklet 2.0
-UID_S2 = 'VYV' #the UID of  CO2 Bricklet 2.0
-UID_S3 = 'VYS' #the UID of  CO2 Bricklet 2.0
-UID_S4 = 'VZ2' #the UID of  CO2 Bricklet 2.0 
-
-"""
-
-
-def split_data_frame(point):
-    integral = pd.read_csv(path_to_load, delimiter=';', lineterminator='\r', usecols=[point])
-
-    # if there is no nan value at the end of a dataframe, we should add one row of nan
+def split_data_frame(column_index):
+    try:
+        integral = pd.read_csv(path_to_load, delimiter=';', lineterminator='\r', usecols=[column_index])
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
+        exit(1)
 
     integral.loc[len(integral.index)] = [np.nan]
-    slice_data = []
-
-    for column_name in integral:
-        for i in range(0, len(integral) - 1):
-            if pd.isnull(integral[column_name][i + 1]) and pd.notnull(integral[column_name][i]):
-                (slice_data.append(i))
+    split_indices = [i for i in range(len(integral) - 1)
+                     if pd.isnull(integral.iloc[i + 1, 0]) and pd.notnull(integral.iloc[i, 0])]
 
     periods = []
-    odd_j = [0]
-    for i in range(0, len(slice_data)):
-        if i % 2:
-            odd_j.append(slice_data[i])
+    start_indices = [0] + [split_indices[i] for i in range(1, len(split_indices), 2)]
+    end_indices = [split_indices[i] for i in range(1, len(split_indices), 2)]
 
-    even_i = []
-    for i in range(0, len(slice_data)):
-        if i % 2:
-            even_i.append(slice_data[i])
-
-    for i, j in zip(even_i, odd_j):
-        period = integral[j:i].dropna().reset_index(drop=True)
-        period.insert(0, 'time', np.arange(0, period.shape[0] * interval, interval))
-        periods.append(period)
+    for start, end in zip(start_indices, end_indices):
+        segment = integral.iloc[start:end].dropna().reset_index(drop=True)
+        segment.insert(0, 'time', np.arange(0, segment.shape[0] * interval, interval))
+        periods.append(segment)
 
     return periods
 
+def periodic_integral(sensor_index, df, ymin):
+    sensor_labels = ['VYU', 'VYV', '21kv', 'VZ2']
+    column_name = f'Concentration [ppm] at {sensor_labels[sensor_index - 1]}'
 
-def periodic_integral(point, df, ymin):
-    points = ['time', 'VYU', 'VYV', '21kv', 'VZ2']
+    plt.rcParams.update({
+        "figure.figsize": [10, 6],
+        "figure.autolayout": True,
+        "figure.dpi": 100
+    })
 
-    legends = [points[point], 'Step Down Started']
-
-    sensor_name = ['dummy', 'VYU', 'VYV', '21kv', 'VZ2']
-
-    columns_of_data_frame = ['Concentration [ppm] at ' + sensor_name[point]]
-
-    df.plot('time', y=columns_of_data_frame)
+    df.plot('time', y=column_name)
 
     x = df['time'].to_numpy()
-    y = df[columns_of_data_frame[0]].to_numpy()
-
-    # if we should deduce min of each list
-
-    ymin = y.min()
+    y = df[column_name].to_numpy()
 
     x_min, x_max = df['time'].min(), df['time'].max()
+    idx = np.where((x >= x_min) & (x <= x_max))[0]
+    ymin = y.min() if ymin is None else ymin
 
-    idx = np.where((np.array(x) >= x_min) & (np.array(x) <= x_max))[0]
-
-    '''
-
-    plt.xticks(np.arange(min(x), max(x)+1, 35))
-    plt.yticks(np.arange(min(y), max(y)+1, 30),fontsize=12)
-    plt.xticks(rotation = 90,fontsize=12)
-
-   '''
-
-    plt.yticks(np.arange(ymin, max(y) + 1, 150), fontsize=12)
-
-    integral_value = np.trapezoid(x=np.array(x)[idx], y=np.array(y)[idx] - ymin)
-
-    print(f"Integral under the curve for {points[point]} is: {integral_value}")
+    integral_value = np.trapezoid(x=x[idx], y=y[idx] - ymin)
+    print(f"Integral under the curve for {sensor_labels[sensor_index - 1]} is: {integral_value}")
 
     plt.fill_between(x, y, ymin, color='lightgreen')
-
-    plt.rcParams["figure.figsize"] = [10, 6]
-    plt.rcParams["figure.autolayout"] = True
-    plt.rcParams["figure.dpi"] = 100
-
+    plt.yticks(np.arange(ymin, max(y) + 1, 150), fontsize=12)
     plt.xlabel('Time[s]')
     plt.ylabel('Concentration [ppm]')
-
-    # mode="expand"
-    plt.legend(legends, bbox_to_anchor=(0, 1, 1, 0), loc="lower left", ncol=3)
+    plt.legend([sensor_labels[sensor_index - 1], 'Step Down Started'], bbox_to_anchor=(0, 1, 1, 0), loc="lower left", ncol=3)
     print("Saving figure...")
     plt.savefig('figs.jpg')
     plt.show()
     plt.close()
 
+try:
+    eval_point = int(input('Which point do you want to evaluate?\nVYU: 1\nVYV: 2\n21kv: 3\nVZ2: 4\n'))
+    if eval_point not in [1, 2, 3, 4]:
+        raise ValueError("Invalid input. Please enter a number between 1 and 4.")
+except ValueError as ve:
+    print(f"Input error: {ve}")
+    exit(1)
 
-
-eval_point = int(input('which point do you want to evaluate? \n'
-                       'VYU: 1 \nVYV: 2 \n21kv: 3\nVZ2: 4\n'))
-
-a = split_data_frame(eval_point)
-
-'''
-# For ymin constant
-'''
-
-ymin = a[0].min()
-ymin = max(chain(ymin))
-
-for i in a:
-    periodic_integral(eval_point, i, ymin)
-
+segments = split_data_frame(eval_point)
+ymin = max(chain(segments[0].min())) if segments else 0
+for segment in segments:
+    periodic_integral(eval_point, segment, ymin)
