@@ -123,5 +123,5 @@ if pulse == 0:
 
 else:
     print(Fore.MAGENTA + '\n No evaluation for pulse method!'
-                         '\nThe figure is exported!')
+                         '\nThe figure is ready for pulse method!')
     sys.exit()
