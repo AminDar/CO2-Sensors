@@ -1,6 +1,6 @@
 # CO2-Sensors
 
-This repository provides scripts to record, calibrate and evaluate CO₂ concentration data using Tinkerforge CO2 Bricklet 2.0 sensors. The tools can help assess ventilation efficiency through step-up and step-down measurements and generate plots for further analysis.
+This repository provides scripts to record, calibrate and evaluate CO₂ concentration data using Tinkerforge CO2 Bricklet 2.0 sensors. The tools can help assess ventilation efficiency through step-up and step-down measurements and generate plots for further analysis. This repository was developed during a student project.
 
 ## Repository Layout
 
