@@ -122,6 +122,6 @@ if pulse == 0:
     plot_data(df_stepUp, df_stepDown)
 
 else:
-    print(Fore.MAGENTA + '\nThis code is not ready to evaluate pluse method yet! Sorry!'
+    print(Fore.MAGENTA + '\n No evaluation for pulse method!'
                          '\nThe figure is exported!')
     sys.exit()
