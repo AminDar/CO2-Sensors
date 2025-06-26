@@ -23,6 +23,7 @@ UID_S2 = 'VYV'
 UID_S3 = '21kv'
 UID_S4 = 'VZ2'
 
+
 def record_and_show(duration, interval, file, columns, data, time_live):
     MeasureTime = duration * 60 / interval
     c = 0
@@ -37,15 +38,36 @@ def record_and_show(duration, interval, file, columns, data, time_live):
         co2_concentration3 = co2_3.get_co2_concentration()
         co2_concentration4 = co2_4.get_co2_concentration()
         temperature1 = co2_1.get_temperature()
+        temperature2 = co2_2.get_temperature()
+        temperature3 = co2_3.get_temperature()
+        temperature4 = co2_4.get_temperature()
         humid1 = co2_1.get_humidity()
+        humid2 = co2_2.get_humidity()
+        humid3 = co2_3.get_humidity()
+        humid4 = co2_4.get_humidity()
+        t_now = datetime.now()
+        time_live.append(t_now)
 
-        data.append([co2_concentration1, co2_concentration2, co2_concentration3, co2_concentration4, temperature1 / 100, humid1 / 100])
+        data.append(
+            [t_now,
+             co2_concentration1,
+             co2_concentration2,
+             co2_concentration3,
+             co2_concentration4,
+             temperature1 / 100,
+             humid1 / 100,
+             temperature2 / 100,
+             humid2 / 100,
+             temperature3 / 100,
+             humid3 / 100,
+             temperature4 / 100,
+             humid4 / 100
+             ]
+        )
         data_live1.append(co2_concentration1)
         data_live2.append(co2_concentration2)
         data_live3.append(co2_concentration3)
         data_live4.append(co2_concentration4)
-        t_now = datetime.now()
-        time_live.append(t_now)
 
         plt.legend(['Sensor 1', 'Sensor 2', 'Sensor 3', 'Sensor 4'], loc='center', bbox_to_anchor=(0.5, 0.5))
         plt.xticks(rotation=45)
@@ -56,7 +78,9 @@ def record_and_show(duration, interval, file, columns, data, time_live):
         plt.draw()
         plt.pause(1)
         c += 1
-        pd.DataFrame(data, columns=columns)
+
+        df_all = pd.DataFrame(data, columns=columns)
+        df_all.to_csv(file[:-4] + 'ALL.csv', index=False)
 
         if keyboard.is_pressed('s'):
             print('Step Down Started\n **************\n **************')
@@ -75,6 +99,7 @@ def record_and_show(duration, interval, file, columns, data, time_live):
             with open(file, 'a') as csv_file:
                 writer = csv.writer(csv_file, delimiter=';', lineterminator='\r')
                 writer.writerow([t_now, co2_concentration1, co2_concentration2, co2_concentration3, co2_concentration4])
+
 
 def main():
     duration = int(input('Measurement Duration in min: '))
@@ -101,16 +126,24 @@ def main():
 
     time_live = []
     data = []
-    columns = ['Concentration [ppm] at ' + UID_S1, 'Concentration [ppm] at ' + UID_S2, 'Concentration [ppm] at ' + UID_S3,
-               'Concentration [ppm] at ' + UID_S4, 'Temperature [C] at ' + UID_S1, 'Humidity [%] at ' + UID_S1]
+    columns = [
+        'Time',
+        'Concentration [ppm] at ' + UID_S1,
+        'Concentration [ppm] at ' + UID_S2,
+        'Concentration [ppm] at ' + UID_S3,
+        'Concentration [ppm] at ' + UID_S4,
+        'Temperature [C] at ' + UID_S1,
+        'Humidity [%] at ' + UID_S1,
+        'Temperature [C] at ' + UID_S2,
+        'Humidity [%] at ' + UID_S2,
+        'Temperature [C] at ' + UID_S3,
+        'Humidity [%] at ' + UID_S3,
+        'Temperature [C] at ' + UID_S4,
+        'Humidity [%] at ' + UID_S4,
+    ]
 
     record_and_show(duration, interval, file, columns, data, time_live)
 
-    ColumnsOfDataFrame = ['Concentration [ppm] at ' + UID_S1, 'Concentration [ppm] at ' + UID_S2,
-                          'Concentration [ppm] at ' + UID_S3, 'Concentration [ppm] at ' + UID_S4]
-    df = pd.DataFrame(data, columns=columns)
-    timeseries = np.arange(0, (duration * 60) + 1, interval)
-    df.insert(0, 'time', timeseries / 60)
 
 if __name__ == "__main__":
     main()
