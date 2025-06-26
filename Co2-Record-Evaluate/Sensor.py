@@ -25,6 +25,28 @@ UID_S4 = 'VZ2'
 
 
 def record_and_show(duration, interval, file, columns, data, time_live):
+
+    """Record sensor readings and display them in a live plot.
+
+        Parameters
+        ----------
+        duration : int
+            Measurement length in minutes.
+        interval : int
+            Sensor polling period in seconds.
+        file : str
+            CSV path used to store the results.
+        columns : list
+            Column titles for the aggregated data.
+        data : list
+            List that accumulates the recorded rows.
+        time_live : list
+            Timestamps for plotting the live graph.
+
+        The function queries each CO2 sensor until the desired duration is
+        reached. Values are written to ``file`` and a matplotlib plot is
+        updated in real time to show the current concentrations.
+        """
     MeasureTime = duration * 60 / interval
     c = 0
     data_live1, data_live2, data_live3, data_live4 = [], [], [], []
@@ -102,6 +124,15 @@ def record_and_show(duration, interval, file, columns, data, time_live):
 
 
 def main():
+
+    """Initialise sensors and start the recording session.
+
+    The user is prompted for the measurement duration. Four CO2
+    sensors are then configured and an output CSV file is prepared.
+    After setup, :func:`record_and_show` is called to collect and
+    display data.
+    """
+
     duration = int(input('Measurement Duration in min: '))
     interval = 1
 

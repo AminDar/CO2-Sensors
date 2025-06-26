@@ -31,6 +31,39 @@ This repository provides scripts to record, calibrate and evaluate CO₂ concent
    ```
    Other scripts in `utils/` provide regression models and integral-based metrics.
 
+4. **Use MFC Controller**
+   To control CO₂ flow using the MFC, run:
+   ```bash
+   python Co2-Record-Evaluate/MFC.py
+   ```
+   - The target CO₂ flow can be set using the `set_point` parameter in the function `record_and_show(mfc, file, duration, interval, set_point)`.
+   - Always verify the correct serial port address when using the MFC by checking or setting the `port` parameter in the `initialize_mfc(port='COM3', slave_id=11)` function.
+
+5. **Running Sensor and MFC Together**
+   If you want to run both `Sensor.py` and `MFC.py` at the same time (for instance to monitor CO₂ levels while controlling flow), use a **Compound Run/Debug Configuration** in PyCharm:
+
+   ### Steps to Create a Compound Run/Debug Configuration
+
+   1. **Open Run/Debug Configurations**:
+      - Go to the top-right corner of PyCharm and click the dropdown next to the run/debug button.
+      - Select "Edit Configurations..."
+
+   2. **Add a New Compound Configuration**:
+      - Click the `+` icon and choose "Compound"
+
+   3. **Name Your Configuration**:
+      - Give it a meaningful name like `Sensor and MFC`
+
+   4. **Add Configurations**:
+      - Use the `+` button to add both your existing `Sensor.py` and `MFC.py` configurations.
+
+   5. **Set Order and Options (Optional)**:
+      - You can reorder or specify whether to run/debug each script.
+
+   6. **Apply and Run**:
+      - Click "Apply" then "OK"
+      - Select the compound config from the dropdown and run both scripts simultaneously.
+
 ## Requirements
 
 The code relies on:

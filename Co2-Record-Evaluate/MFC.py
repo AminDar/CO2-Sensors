@@ -18,6 +18,19 @@ import keyboard
 
 
 def initialize_mfc(port='COM3', slave_id=11):
+
+    """Set up the Modbus serial connection for the MFC.
+        Parameters
+        ----------
+        port : str
+            Serial port of the controller.
+        slave_id : int
+            Modbus slave address.
+        Returns
+    -------
+        minimalmodbus.Instrument
+        Configured instrument for further use.
+    """
     mfc = minbus.Instrument(port, slave_id, 'rtu', True, False)
     mfc.serial.baudrate = 9600
     mfc.serial.parity = serial.PARITY_NONE
@@ -28,6 +41,13 @@ def initialize_mfc(port='COM3', slave_id=11):
 # Read an integer from one 16-bit register in the slave, possibly scaling it.
 
 def create_csv_logger():
+
+    """Create a CSV file for logging measurements.
+    Returns
+    -------
+    str
+       Path to the created file in the ``Raw`` directory.
+    """
     t_start = datetime.now()
     t_start_str = t_start.strftime('%y%m%d_%H%M%S')
     file_path = f'Raw/MFC{t_start_str}.csv'
@@ -37,6 +57,24 @@ def create_csv_logger():
     return file_path
 
 def record_and_show(mfc, file, duration, interval, set_point):
+
+    """Run the control loop and log measurements.
+      Parameters
+        ----------
+        mfc : minimalmodbus.Instrument
+            Connected MFC instance.
+        file : str
+            CSV file path for logging.
+        duration : int
+            Measurement duration in minutes.
+        interval : int
+            Delay between samples in seconds.
+        set_point : float
+            Desired gas flow rate.
+        Keyboard Shortcuts
+        -------------------
+        ``s`` decrease flow, ``u`` increase flow, ``q`` stop.
+        """
     columns = ['Gas Flow', 'temp']
     data = []
     set_point = float(set_point)
