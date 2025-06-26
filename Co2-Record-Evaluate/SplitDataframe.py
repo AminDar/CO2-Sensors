@@ -104,6 +104,7 @@ def main():
     else:
         print(Fore.MAGENTA + '\n No evaluation for pulse method!'
               '\nThe figure is ready for pulse method!')
+        plot_data(df_stepUp, df_stepDown)
         sys.exit()
 
 if __name__ == "__main__":
